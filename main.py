@@ -1,10 +1,7 @@
 import numpy as np
-import pyautogui
 from PIL import ImageGrab
 import cv2
 
-import time
-import sys
 from WindowMgmt import *
 
 pixel = (591, 593)

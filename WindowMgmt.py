@@ -42,15 +42,19 @@ def get_nostale_window():
 
             def focus_window(self):
                 self.last_focused = win32gui.GetForegroundWindow()
-                win32gui.SetFocus(self.hwnd)
+
+                if self.last_focused != self.hwnd:
+                    win32gui.SetForegroundWindow(self.hwnd)
+                    time.sleep(0.05)
 
             def restore_focus(self):
-                win32gui.SetFocus(self.last_focused)
+                if self.last_focused != self.hwnd:
+                    win32gui.SetForegroundWindow(self.last_focused)
 
             def get_pixel_offset(self):
                 return 0, 0
 
-    elif sys.platform == 'linux' or platform == 'linux2':
+    elif sys.platform == 'linux' or sys.platform == 'linux2':
         from ewmh import EWMH
 
         class Window:
@@ -85,7 +89,6 @@ def get_nostale_window():
                 if self.ewmh.getWmPid(self.last_focused) != self.ewmh.getWmPid(self.window):
                     self.ewmh.setActiveWindow(self.window)
                     self.ewmh.display.flush()
-                    time.sleep(0.05)
 
             def restore_focus(self):
                 if self.ewmh.getWmPid(self.last_focused) != self.ewmh.getWmPid(self.window):
