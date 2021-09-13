@@ -3,15 +3,7 @@ from PIL import ImageGrab
 import cv2
 
 from WindowMgmt import *
-
-pixel = (591, 593)
-buffs = [
-    # ['Covert Fishing' '3', 200],
-    # ['Fish-Fish Dance', '', 200],
-    # ['Maintain Fishing Line', '', 120],
-    ['Bait Fishing', '7', 120],
-]
-
+from Config import config, get_section
 
 window = ''
 try:
@@ -20,49 +12,59 @@ except NosWindowNotFound as e:
     print(e.message)
     exit()
 
-off_x, off_y = window.get_pixel_offset()
-pixel_pos = (pixel[0] + off_x, pixel[1] + off_y)
-
-player = Player(window, buffs)
+player = Player(window)
 
 
 def mouse_position():
     print(pyautogui.position())
 
 
-def get_screenshot():
-    position = window.get_bounds()
-
-    screenshot = ImageGrab.grab(position, all_screens=True)
+def get_screenshot(bounds):
+    screenshot = ImageGrab.grab(bounds, all_screens=True)
     screenshot = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
 
     return screenshot
 
 
-def draw_screen(screenshot, to_pull):
-    for x in range(-2, 3):
-        for y in range(-2, 3):
-            color = [255, 0, 0] if to_pull else [0, 0, 225]
-            screenshot[pixel_pos[1] + x][pixel_pos[0] + y] = color
+def draw_screen(screenshot, to_pull, screenshot_res_offsets):
+    mark_x, mark_y = [int(x) for x in config.get('screenshots', 'mark-resolution').split(';')]
+    width_offset, height_offset = screenshot_res_offsets
 
-    cv2.imshow("Screen", screenshot)
+    for x in range(-mark_x, mark_x + 1):
+        for y in range(-mark_y, mark_y + 1):
+            color = [0, 255, 0] if to_pull else [0, 0, 225]
+            screenshot[height_offset + y][width_offset + x] = color
+
+    cv2.imshow("NosTale Capture", screenshot)
     key = cv2.waitKey(25)
+
+
+def calculate_bounds(window_bounds, pixel_pos, screenshot_res_offsets):
+    abs_x, abs_y = [x1 + x2 for x1, x2 in zip(window_bounds, pixel_pos)]
+    width_offset, height_offset = screenshot_res_offsets
+
+    return abs_x - width_offset, abs_y - height_offset, abs_x + width_offset, abs_y + height_offset
 
 
 def main_loop():
     recognized_pixels = set()
-
+    screenshot_res_offsets = [math.floor(int(x) / 2) for x in config.get('screenshots', 'window-resolution').split(';')]
+    pixel_pos = [int(x) for x in config.get('pixel', 'position').split(';')]
+    show_screenshots = config.get('screenshots', 'show') == '1'
     pixel_recognition_time = 2
 
+    log_message('Fishing started')
     time.sleep(3)
 
     player.all_actions()
 
     start = time.perf_counter()
     while True:
-        screenshot = get_screenshot()
+        bounds = calculate_bounds(window.get_bounds(), pixel_pos, screenshot_res_offsets)
 
-        pixel_check = tuple(screenshot[pixel_pos[1]][pixel_pos[0]])
+        screenshot = get_screenshot(bounds)
+
+        pixel_check = tuple(screenshot[screenshot_res_offsets[1]][screenshot_res_offsets[0]])
 
         if time.perf_counter() - start < pixel_recognition_time:
             recognized_pixels.add(pixel_check)
@@ -73,15 +75,12 @@ def main_loop():
             if time.perf_counter() - start > 20:
                 recognized_pixels = set()
 
-            player.all_actions()
+            # player.all_actions()
 
             start = time.perf_counter()
 
+        if show_screenshots:
+            draw_screen(screenshot, to_pull, screenshot_res_offsets)
 
-if __name__ == '__main__':
-    main_loop()
-
-# while True:
-#     mouse_position()
-#     screenshot = get_screenshot()
-#     draw_screen(screenshot, True)
+# if __name__ == '__main__':
+#     main_loop()

@@ -1,10 +1,14 @@
 import pyautogui
 
+from Config import config, get_section, parse_name
+
 import sys
 import subprocess
 import os
 import time
 import random
+
+log_start = time.perf_counter()
 
 
 class NosWindowNotFound(BaseException):
@@ -13,8 +17,13 @@ class NosWindowNotFound(BaseException):
         super().__init__(message)
 
 
-def random_wait_time():
-    return random.randrange(10000, 22000) / 10000
+def random_wait_time(additional=0):
+    time.sleep(additional + random.randrange(10000, 22000) / 10000)
+
+
+def log_message(msg):
+    timer = format(time.perf_counter() - log_start, '.3f')
+    print(f'{timer} {msg}')
 
 
 def get_nostale_window():
@@ -62,7 +71,8 @@ def get_nostale_window():
                 self.ewmh = EWMH()
 
                 try:
-                    self.window = next(filter(lambda w: w.get_wm_class()[0] == 'nostaleclientx.exe', self.ewmh.getClientList()))
+                    self.window = next(
+                        filter(lambda w: w.get_wm_class()[0] == 'nostaleclientx.exe', self.ewmh.getClientList()))
                 except StopIteration:
                     raise NosWindowNotFound('NosTale window not found')
 
@@ -118,13 +128,22 @@ class Buff:
             self.window.focus_window()
             pyautogui.press(self.key)
             self.window.restore_focus()
-            time.sleep(1 + random_wait_time())
+            random_wait_time(1)
             self.last_used = time.perf_counter()
 
 
 class Player:
-    def __init__(self, window, buffs):
-        self.buffs = [Buff(window, *stats) for stats in buffs]
+    def __init__(self, window):
+        buff_data = get_section(config, 'buffs')
+
+        self.buffs = [Buff(window, parse_name(name), *values.split(';')) for name, values in buff_data.items()]
+
+        self.cast_line_key = config.get('skills', 'cast-line')
+        self.reel_in_key = config.get('skills', 'reel-in')
+        self.cast_pro_key, cast_pro_cd = config.get('skills', 'cast-line-(pro)').split(';')
+        self.cast_pro_cd = int(cast_pro_cd)
+        self.use_pro = config.get('skills', 'use-pro-cast') == 1
+
         self.window = window
         self.last_mega_cast = time.perf_counter()
 
@@ -134,29 +153,29 @@ class Player:
 
     def cast_a_rod(self):
         self.window.focus_window()
-        # if time.perf_counter() - self.last_mega_cast > 60:
-        #     print('Pro casting a rod')
-        #     pyautogui.press('1')
-        #     self.last_mega_cast = time.perf_counter()
-        # else:
-        print('Casting a rod')
-        pyautogui.press('2')
-        self.window.restore_focus()
+        if self.use_pro and time.perf_counter() - self.last_mega_cast > self.reel_pro_cd:
+            log_message('Pro casting a line')
+            pyautogui.press(self.reel_pro_key)
+            self.last_mega_cast = time.perf_counter()
+        else:
+            log_message('Casting a line')
+            pyautogui.press(self.reel_in_key)
+            self.window.restore_focus()
 
         time.sleep(3)
 
-    def pull_up(self):
-        print('Noticed to pull up')
-        time.sleep(random_wait_time())
+    def reel_in(self):
+        log_message('Noticed to reel in')
+        random_wait_time()
 
-        print('Pulling up')
+        log_message('Reeling in')
         self.window.focus_window()
-        pyautogui.press('6')
+        pyautogui.press(self.reel_in_key)
         self.window.restore_focus()
 
-        time.sleep(4 + random_wait_time())
+        random_wait_time(4)
 
     def all_actions(self):
-        self.pull_up()
+        self.reel_in()
         self.use_buffs()
         self.cast_a_rod()
