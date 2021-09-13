@@ -12,19 +12,20 @@ default_values = {
         ';bait-fishing': '7;120',
     },
     'skills': {
-        'cast-line': '2',
         'cast-line-(pro)': '1;60',
+        'cast-line': '2',
         'reel-in': '6',
-        'use-pro-cast': '0'
-    },
-    'pixel': {
-        'position': '591;593',
+        'use-pro-cast': 'false'
     },
     'screenshots': {
-        ';change "show" value to show/hide debug screenshots': '1/0',
-        'show': '1',
+        'show': 'true',
         'window-resolution': '200;200',
         'mark-resolution': '3;3',
+    },
+    'general': {
+        'pixel-position': '591;593',
+        'show-mouse-position': 'true',
+        'activate': 'false',
     }
 }
 
