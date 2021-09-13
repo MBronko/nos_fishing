@@ -20,7 +20,7 @@ default_values = {
     'screenshots': {
         'show': 'true',
         'window-resolution': '200;200',
-        'mark-resolution': '3;3',
+        'mark-resolution': '2;2',
     },
     'general': {
         'pixel-position': '591;593',

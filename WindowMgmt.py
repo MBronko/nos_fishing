@@ -113,7 +113,7 @@ class Buff:
         self.last_used = None
         self.name = name
         self.key = key
-        self.cooldown = cooldown
+        self.cooldown = int(cooldown)
         self.window = window
 
     def use(self):
@@ -141,6 +141,8 @@ class Player:
 
         self.window = window
         self.last_mega_cast = time.perf_counter()
+
+        self.to_pull = False
 
     def use_buffs(self):
         if not self.activated:
@@ -184,6 +186,9 @@ class Player:
             return
 
         self.reel_in()
+
+        self.to_pull = False
+
         self.use_buffs()
         self.cast_line()
 
@@ -197,6 +202,8 @@ except NosWindowNotFound as e:
 
 player = Player(window)
 
+to_pull = False
+
 
 def wait_time(additional=0, constant=False):
     fps = 5
@@ -205,7 +212,6 @@ def wait_time(additional=0, constant=False):
     if not constant:
         sleep_time += random.randrange(10000, 22000) / 10000
 
-    test = time.perf_counter()
     while sleep_time > 0:
         start = time.perf_counter()
         draw_screen()
@@ -216,13 +222,10 @@ def wait_time(additional=0, constant=False):
         time.sleep(sleep_interval)
         sleep_time -= sleep_interval
 
-    if constant:
-        print('waited for ', time.perf_counter()-test, 'instead of', additional)
-
 
 def log_message(msg):
-    timer = format(time.perf_counter() - log_start, '.3f').ljust(9)
-    print(f'{timer} {msg}')
+    timer = format(time.perf_counter() - log_start, '.3f')
+    print(f'{" " * (8 - len(timer))}{timer}:  {msg}')
 
 
 def mouse_position():
@@ -266,8 +269,8 @@ def draw_screen():
 
     for x in range(-mark_x, mark_x + 1):
         for y in range(-mark_y, mark_y + 1):
-            # color = [0, 0, 255] if to_pull else [0, 255, 0]
-            color = [0, 255, 0]
+            color = [0, 0, 255] if player.to_pull else [0, 255, 0]
+            # color = [0, 255, 0]
             screenshot[height_offset + y][width_offset + x] = color
 
     cv2.imshow("NosFish", screenshot)
