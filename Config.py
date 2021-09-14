@@ -1,6 +1,5 @@
 import configparser
 import os
-import sys
 
 config_file = 'config.ini'
 
@@ -8,8 +7,8 @@ default_values = {
     'buffs': {
         ';covert-fishing': '3;200',
         ';fish-fish-dance': 'r;200',
-        ';maintain-fishing-line': '4;120',
         ';bait-fishing': '7;120',
+        ';maintain-fishing-line': '4;120',
     },
     'skills': {
         'cast-line-(pro)': '1;60',
@@ -18,13 +17,16 @@ default_values = {
         'use-pro-cast': 'false'
     },
     'screenshots': {
-        'show': 'true',
-        'window-resolution': '200;200',
-        'mark-resolution': '2;2',
+        'window-resolution': '200x200',
+        'mark-resolution': '2x2',
     },
     'general': {
-        'pixel-position': '591;593',
+        'pixel-position': '591x593',
         'show-mouse-position': 'true',
+        'show-watched-pixel': 'true',
+        'min-action-delay': '900',
+        'max-action-delay': '1800',
+        'pixel-recognition-time': '3',
         'activate': 'false',
     }
 }
@@ -42,12 +44,16 @@ def create_config_file():
         new_config.write(file)
 
 
-def get_section(conf, section):
+def get_section(conf: configparser.ConfigParser, section: str):
     return dict(conf.items(section))
 
 
 def parse_name(name: str):
     return ' '.join(name.split('-')).title()
+
+
+def parse_value(value: str, types=(str, str), delimeter: str = ';'):
+    return [conv(val) for conv, val in zip(types, value.split(delimeter))]
 
 
 if not os.path.exists(config_file):
