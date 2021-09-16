@@ -1,4 +1,4 @@
-from WindowMgmt import NosWindowNotFound
+from WindowMgmt import NosWindowNotFound, NonAdminUser
 from Interface import MainInterface
 
 interface = MainInterface()
@@ -6,7 +6,7 @@ interface = MainInterface()
 if __name__ == '__main__':
     try:
         interface.initialize()
-    except NosWindowNotFound as e:
+    except (NosWindowNotFound, NonAdminUser) as e:
         print(e.message)
         exit()
 

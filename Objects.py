@@ -16,9 +16,9 @@ class Buff:
     def use(self):
         if self.last_used is None or time.perf_counter() - self.last_used > self.cooldown:
             self.interface.log_message(f'Using "{self.name}" skill')
-            self.interface.window.focus_window()
-            pyautogui.press(self.key)
-            self.interface.window.restore_focus()
+
+            self.interface.window.press(self.key)
+
             self.interface.wait_time(1)
             self.last_used = time.perf_counter()
 
@@ -53,15 +53,12 @@ class Player:
         if not self.activated:
             return
 
-        self.interface.window.focus_window()
         if self.use_pro and time.perf_counter() - self.last_mega_cast > self.cast_pro_cd:
             self.interface.log_message('Pro casting a line')
-            pyautogui.press(self.cast_pro_key)
-            self.last_mega_cast = time.perf_counter()
+            self.interface.window.press(self.cast_pro_key)
         else:
             self.interface.log_message('Casting a line')
-            pyautogui.press(self.cast_line_key)
-            self.interface.window.restore_focus()
+            self.interface.window.press(self.cast_line_key)
 
         self.interface.wait_time(3, constant=True)
 
@@ -73,9 +70,8 @@ class Player:
         self.interface.wait_time()
 
         self.interface.log_message('Reeling in')
-        self.interface.window.focus_window()
-        pyautogui.press(self.reel_in_key)
-        self.interface.window.restore_focus()
+
+        self.interface.window.press(self.reel_in_key)
 
         self.interface.wait_time(4)
 

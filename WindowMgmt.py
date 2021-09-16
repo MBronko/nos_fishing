@@ -1,6 +1,7 @@
-import sys
 import subprocess
-import time
+import sys
+
+import pyautogui
 
 
 class NosWindowNotFound(BaseException):
@@ -9,39 +10,39 @@ class NosWindowNotFound(BaseException):
         super().__init__(message)
 
 
+class NonAdminUser(BaseException):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(message)
+
+
 def get_nostale_window():
     if sys.platform == 'win32':
+        import win32api
+        import win32con
         import win32gui
+        import ctypes
+
+        if ctypes.windll.shell32.IsUserAnAdmin() == 0:
+            raise NonAdminUser('You have to start program as administrator')
 
         class Window:
             def __init__(self):
-                def enum_win(hwnd, result):
-                    win_text = win32gui.GetWindowText(hwnd)
-                    if win_text == 'NosTale':
-                        res.append(hwnd)
+                self.hwnd = win32gui.FindWindowEx(0, 0, None, 'NosTale')
 
-                res = []
-                win32gui.EnumWindows(enum_win, res)
-
-                if not res:
+                if not self.hwnd:
                     raise NosWindowNotFound('NosTale window not found')
 
-                self.hwnd = res[0]
                 self.last_focused = 0
 
             def get_bounds(self):
                 return win32gui.GetWindowRect(self.hwnd)
 
-            def focus_window(self):
-                self.last_focused = win32gui.GetForegroundWindow()
+            def press(self, key):
+                char = ord(key)
 
-                if self.last_focused != self.hwnd:
-                    win32gui.SetForegroundWindow(self.hwnd)
-                    time.sleep(0.05)
-
-            def restore_focus(self):
-                if self.last_focused != self.hwnd:
-                    win32gui.SetForegroundWindow(self.last_focused)
+                win32api.SendMessage(self.hwnd, win32con.WM_KEYDOWN, char, 0)
+                win32api.SendMessage(self.hwnd, win32con.WM_KEYUP, char, 0)
 
     elif sys.platform == 'linux' or sys.platform == 'linux2':
         from ewmh import EWMH
@@ -84,6 +85,11 @@ def get_nostale_window():
                 if self.ewmh.getWmPid(self.last_focused) != self.ewmh.getWmPid(self.window):
                     self.ewmh.setActiveWindow(self.last_focused)
                     self.ewmh.display.flush()
+
+            def press(self, char):
+                self.focus_window()
+                pyautogui.press(char)
+                self.restore_focus()
 
     else:
         raise OSError('Unsupported operating system')
