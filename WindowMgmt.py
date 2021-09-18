@@ -39,7 +39,7 @@ def get_nostale_window():
                 return win32gui.GetWindowRect(self.hwnd)
 
             def press(self, key):
-                char = ord(key)
+                char = ord(key[0].upper())
 
                 win32api.SendMessage(self.hwnd, win32con.WM_KEYDOWN, char, 0)
                 win32api.SendMessage(self.hwnd, win32con.WM_KEYUP, char, 0)

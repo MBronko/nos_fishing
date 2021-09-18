@@ -71,7 +71,7 @@ class MainInterface:
     def calculate_bounds(self, width_win_offset: int = 0, height_win_offset: int = 0):
         """
         return list[int, int, int, int]
-        that coresponds to left, upper, right, bottom (respectively) bounds of the box
+        that correspond to left, upper, right, bottom (respectively) bounds of the box
         middle of the box is on the self.pixel_pos
         width and height of the box are equal to 2*width_win_offset and 2*height_win_offset
         """
