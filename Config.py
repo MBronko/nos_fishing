@@ -11,7 +11,7 @@ default_values = {
         ';maintain-fishing-line': '4;120',
     },
     'skills': {
-        'cast-line-(pro)': '1;60',
+        'cast-line-pro': '1;62',
         'cast-line': '2',
         'reel-in': '6',
         'use-pro-cast': 'false'
@@ -21,13 +21,18 @@ default_values = {
         'mark-resolution': '2x2',
     },
     'general': {
-        'pixel-position': '591x593',
+        'pixel-position': '476x451',
         'show-mouse-position': 'true',
         'show-watched-pixel': 'true',
-        'min-action-delay': '900',
-        'max-action-delay': '1800',
         'pixel-recognition-time': '3',
         'activate': 'false',
+    },
+    'delays': {
+        'reeling': '500-1000',
+        'post-action': '0-700',
+        'post-reeling': '5000',
+        'buff': '1800',
+        'cast': '3000',
     }
 }
 

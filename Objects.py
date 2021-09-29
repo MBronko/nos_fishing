@@ -1,8 +1,7 @@
-import pyautogui
-
 from Config import config, get_section, parse_name, parse_value
 
 import time
+import random
 
 
 class Buff:
@@ -19,7 +18,7 @@ class Buff:
 
             self.interface.window.press(self.key)
 
-            self.interface.wait_time(1)
+            self.interface.wait_time(self.interface.buff_delay)
             self.last_used = time.perf_counter()
 
 
@@ -35,10 +34,14 @@ class Player:
 
         self.cast_line_key = config.get('skills', 'cast-line')
         self.reel_in_key = config.get('skills', 'reel-in')
-        self.cast_pro_key, self.cast_pro_cd = parse_value(config.get('skills', 'cast-line-(pro)'), (str, int))
+        self.cast_pro_key, self.cast_pro_cd = parse_value(config.get('skills', 'cast-line-pro'), (str, int))
         self.use_pro = config.get('skills', 'use-pro-cast') == 'true'
 
-        self.last_mega_cast = time.perf_counter()
+        self.reeling_delay = sorted(parse_value(config.get('delays', 'reeling'), (int, int), '-'))
+        self.post_reeling_delay = config.getint('delays', 'post-reeling')
+        self.cast_delay = config.getint('delays', 'cast')
+
+        self.last_pro_cast = time.perf_counter()
 
         self.to_pull = False
 
@@ -53,27 +56,28 @@ class Player:
         if not self.activated:
             return
 
-        if self.use_pro and time.perf_counter() - self.last_mega_cast > self.cast_pro_cd:
-            self.interface.log_message('Pro casting a line')
+        if self.use_pro and time.perf_counter() - self.last_pro_cast > self.cast_pro_cd:
+            self.interface.log_message('Casting a line (Pro)')
             self.interface.window.press(self.cast_pro_key)
+            self.last_pro_cast = time.perf_counter()
         else:
             self.interface.log_message('Casting a line')
             self.interface.window.press(self.cast_line_key)
 
-        self.interface.wait_time(3, constant=True)
+        self.interface.wait_time(self.cast_delay, constant=True)
 
     def reel_in(self):
         if not self.activated:
             return
 
         self.interface.log_message('Noticed to reel in')
-        self.interface.wait_time()
+        self.interface.wait_time(random.randrange(*self.reeling_delay), constant=True)
 
         self.interface.log_message('Reeling in')
 
         self.interface.window.press(self.reel_in_key)
 
-        self.interface.wait_time(4)
+        self.interface.wait_time(self.post_reeling_delay)
 
     def all_actions(self):
         if not self.activated:

@@ -17,8 +17,9 @@ class MainInterface:
         self.window = None
         self.player = Player(self)
 
-        self.min_action_delay = config.getint('general', 'min-action-delay')
-        self.max_action_delay = config.getint('general', 'max-action-delay')
+        self.action_delay = sorted(parse_value(config.get('delays', 'post-action'), (int, int), '-'))
+        self.buff_delay = config.getint('delays', 'buff')
+
         self.pixel_recognition_time = config.getint('general', 'pixel-recognition-time')
 
         self.show_window = config.get('general', 'show-watched-pixel') == 'true'
@@ -42,9 +43,9 @@ class MainInterface:
     def wait_time(self, additional: int = 0, constant: bool = False):
         fps = 5
 
-        sleep_time = additional
+        sleep_time = additional / 1000
         if not constant:
-            sleep_time += random.randrange(self.min_action_delay, self.max_action_delay) / 1000
+            sleep_time += random.randrange(self.action_delay[0], self.action_delay[1]) / 1000
 
         if self.show_window or self.show_mouse:
             while sleep_time > 0:
