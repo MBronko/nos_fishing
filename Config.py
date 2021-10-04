@@ -19,6 +19,7 @@ default_values = {
     'screenshots': {
         'window-resolution': '200x200',
         'mark-resolution': '2x2',
+        'window-fps-when-waiting': '10',
     },
     'general': {
         'pixel-position': '476x451',

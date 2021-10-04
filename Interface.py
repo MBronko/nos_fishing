@@ -16,11 +16,13 @@ class MainInterface:
     def __init__(self):
         self.window = None
         self.player = Player(self)
+        self.running = True
 
         self.action_delay = sorted(parse_value(config.get('delays', 'post-action'), (int, int), '-'))
         self.buff_delay = config.getint('delays', 'buff')
 
         self.pixel_recognition_time = config.getint('general', 'pixel-recognition-time')
+        self.waiting_fps = config.getint('screenshots', 'window-fps-when-waiting')
 
         self.show_window = config.get('general', 'show-watched-pixel') == 'true'
         self.show_mouse = config.get('general', 'show-mouse-position') == 'true'
@@ -41,8 +43,6 @@ class MainInterface:
         print(f'{" " * (8 - len(timer))}{timer}:  {msg}')
 
     def wait_time(self, additional: int = 0, constant: bool = False):
-        fps = 5
-
         sleep_time = additional / 1000
         if not constant:
             sleep_time += random.randrange(self.action_delay[0], self.action_delay[1]) / 1000
@@ -54,7 +54,7 @@ class MainInterface:
                 self.mouse_position()
                 sleep_time = max(sleep_time - time.perf_counter() + start, 0)
 
-                sleep_interval = 1 / fps if sleep_time - (1 / fps) > 0 else sleep_time
+                sleep_interval = 1 / self.waiting_fps if sleep_time - (1 / self.waiting_fps) > 0 else sleep_time
                 time.sleep(sleep_interval)
                 sleep_time -= sleep_interval
         else:
@@ -69,25 +69,16 @@ class MainInterface:
 
         self.log_message(f'Mouse position x={mouse_pos.x - bounds[0]}, y={mouse_pos.y - bounds[1]}')
 
-    def calculate_bounds(self, width_win_offset: int = 0, height_win_offset: int = 0):
+    def calculate_relative_bounds(self, width_win_offset: int = 1, height_win_offset: int = 1):
         """
         return list[int, int, int, int]
         that correspond to left, upper, right, bottom (respectively) bounds of the box
-        middle of the box is on the self.pixel_pos
+        middle of the box is on the self.pixel_pos (relatively to the window)
         width and height of the box are equal to 2*width_win_offset and 2*height_win_offset
         """
-        if width_win_offset == 0:
-            width_win_offset, height_win_offset = self.width_win_offset, self.height_win_offset
-
-        abs_x, abs_y = [z1 + z2 for z1, z2 in zip(self.window.get_bounds(), self.pixel_pos)]
+        abs_x, abs_y = self.pixel_pos
 
         return abs_x - width_win_offset, abs_y - height_win_offset, abs_x + width_win_offset, abs_y + height_win_offset
-
-    def get_screenshot(self, bounds):
-        screenshot = ImageGrab.grab(bounds, all_screens=True)
-        screenshot = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
-
-        return screenshot
 
     def draw_window(self):
         if not self.show_window:
@@ -95,8 +86,8 @@ class MainInterface:
 
         mark_x, mark_y = self.mark_res
 
-        bounds = self.calculate_bounds()
-        screenshot = self.get_screenshot(bounds)
+        bounds = self.calculate_relative_bounds(self.width_win_offset, self.height_win_offset)
+        screenshot = self.window.get_screenshot(bounds)
 
         for x in range(-mark_x, mark_x + 1):
             for y in range(-mark_y, mark_y + 1):
@@ -122,12 +113,11 @@ class MainInterface:
         self.player.all_actions()
 
         start = time.perf_counter()
-        while True:
+        while self.running:
             self.draw_window()
             self.mouse_position()
 
-            screenshot = self.get_screenshot(self.calculate_bounds(1, 1))
-
+            screenshot = self.window.get_screenshot(self.calculate_relative_bounds())
             pixel_check = tuple(screenshot[0][0])
 
             if time.perf_counter() - start < self.pixel_recognition_time:

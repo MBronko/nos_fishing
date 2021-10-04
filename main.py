@@ -6,8 +6,8 @@ interface = MainInterface()
 if __name__ == '__main__':
     try:
         interface.initialize()
+        interface.run()
     except (NosWindowNotFound, NonAdminUser) as e:
         print(e.message)
-        exit()
 
-    interface.run()
+input('Press enter to exit.')
