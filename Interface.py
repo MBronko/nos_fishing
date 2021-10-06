@@ -34,6 +34,8 @@ class MainInterface:
         self.width_win_offset, self.height_win_offset = [math.floor(x / 2) for x in self.window_res]
 
         self.log_start = time.perf_counter()
+        self.recognized_pixels = []
+        self.current_pixels_watched = set()
 
     def initialize(self):
         self.window = get_nostale_window()
@@ -42,14 +44,23 @@ class MainInterface:
         timer = format(time.perf_counter() - self.log_start, '.3f')
         print(f'{" " * (8 - len(timer))}{timer}:  {msg}')
 
-    def wait_time(self, additional: int = 0, constant: bool = False):
+    def wait_time(self, additional: int = 0, constant: bool = False, check_pixel=False):
         sleep_time = additional / 1000
         if not constant:
             sleep_time += random.randrange(self.action_delay[0], self.action_delay[1]) / 1000
 
-        if self.show_window or self.show_mouse:
+        test = 1
+        if self.show_window or self.show_mouse or check_pixel:
             while sleep_time > 0:
                 start = time.perf_counter()
+
+                if check_pixel:
+                    print(test)
+                    test += 1
+
+                if check_pixel and not self.check_to_pull():
+                    return False
+
                 self.draw_window()
                 self.mouse_position()
                 sleep_time = max(sleep_time - time.perf_counter() + start, 0)
@@ -59,6 +70,7 @@ class MainInterface:
                 sleep_time -= sleep_interval
         else:
             time.sleep(sleep_time)
+        return True
 
     def mouse_position(self):
         if not self.show_mouse:
@@ -97,12 +109,21 @@ class MainInterface:
         cv2.imshow("NosFish", screenshot)
         key = cv2.waitKey(1)
 
+    def check_to_pull(self, add_to_sink=False):
+        screenshot = self.window.get_screenshot(self.calculate_relative_bounds())
+        pixel = tuple(screenshot[0][0])
+
+        if add_to_sink:
+            self.current_pixels_watched.add(pixel)
+            return False
+
+        res = pixel not in self.current_pixels_watched and not any([pixel in lookup_set for lookup_set in self.recognized_pixels])
+        return res
+
     def run(self):
         if self.window is None:
             print('Uninitialized Interface')
             return
-
-        recognized_pixels = set()
 
         self.draw_window()
         self.mouse_position()
@@ -110,26 +131,30 @@ class MainInterface:
         self.log_message('Fishing started')
         self.wait_time(2, constant=True)
 
-        self.player.all_actions()
+        # self.player.use_buffs()
+        self.player.cast_line()
 
         start = time.perf_counter()
         while self.running:
             self.draw_window()
             self.mouse_position()
 
-            screenshot = self.window.get_screenshot(self.calculate_relative_bounds())
-            pixel_check = tuple(screenshot[0][0])
+            add_to_sink = time.perf_counter() - start < self.pixel_recognition_time
 
-            if time.perf_counter() - start < self.pixel_recognition_time:
-                recognized_pixels.add(pixel_check)
-
-            self.player.to_pull = pixel_check not in recognized_pixels
+            self.player.to_pull = self.check_to_pull(add_to_sink)
 
             if self.player.to_pull or time.perf_counter() - start > 20:
                 if time.perf_counter() - start > 20:
                     self.log_message('Waiting too long, reseting recognized pixels')
-                    recognized_pixels = set()
+                    self.recognized_pixels = []
 
-                self.player.all_actions()
+                res = self.player.all_actions()
 
-                start = time.perf_counter()
+                self.recognized_pixels.append(self.current_pixels_watched)
+                self.current_pixels_watched = set()
+
+                if len(self.recognized_pixels) > 5:
+                    self.recognized_pixels = self.recognized_pixels[1:]
+
+                if res:
+                    start = time.perf_counter()

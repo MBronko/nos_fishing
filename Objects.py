@@ -71,7 +71,12 @@ class Player:
             return
 
         self.interface.log_message('Noticed to reel in')
-        self.interface.wait_time(random.randrange(*self.reeling_delay), constant=True)
+
+        res = self.interface.wait_time(random.randrange(*self.reeling_delay), constant=True, check_pixel=True)
+
+        if not res:
+            self.interface.log_message('False positive detected')
+            return False
 
         self.interface.log_message('Reeling in')
 
@@ -79,13 +84,18 @@ class Player:
 
         self.interface.wait_time(self.post_reeling_delay)
 
+        return True
+
     def all_actions(self):
         if not self.activated:
             return
 
-        self.reel_in()
+        res = self.reel_in()
 
         self.to_pull = False
 
-        self.use_buffs()
-        self.cast_line()
+        if res:
+            # self.use_buffs()
+            self.cast_line()
+
+        return res
