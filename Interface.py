@@ -32,8 +32,8 @@ class MainInterface:
         self.width_win_offset, self.height_win_offset = [math.floor(x / 2) for x in self.window_res]
 
         self.log_start = time.perf_counter()
-        self.recognized_pixels = []
-        self.current_pixels_watched = set()
+        self.recognized_pixels = set()
+        # self.current_pixels_watched = set()
 
     def initialize(self):
         self.window = get_nostale_window()
@@ -107,11 +107,10 @@ class MainInterface:
         pixel = tuple(screenshot[0][0])
 
         if add_to_sink:
-            self.current_pixels_watched.add(pixel)
+            self.recognized_pixels.add(pixel)
             return False
 
-        res = pixel not in self.current_pixels_watched and not any([pixel in lookup_set for lookup_set in self.recognized_pixels])
-        return res
+        return pixel not in self.recognized_pixels
 
     def run(self):
         if self.window is None:
@@ -140,13 +139,6 @@ class MainInterface:
                     self.log_message('Waiting too long, reseting recognized pixels')
                     self.recognized_pixels = []
 
-                res = self.player.all_actions()
-
-                self.recognized_pixels.append(self.current_pixels_watched)
-                self.current_pixels_watched = set()
-
-                if len(self.recognized_pixels) > 5:
-                    self.recognized_pixels = self.recognized_pixels[1:]
-
-                if res:
+                if self.player.all_actions():
+                    self.recognized_pixels = set()
                     start = time.perf_counter()
