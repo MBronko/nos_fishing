@@ -95,7 +95,7 @@ class Player:
         self.to_pull = False
 
         if res:
-            # self.use_buffs()
+            self.use_buffs()
             self.cast_line()
 
         return res

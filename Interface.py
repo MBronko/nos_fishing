@@ -1,6 +1,4 @@
 import pyautogui
-import numpy as np
-from PIL import ImageGrab
 import cv2
 
 from Config import config, parse_value
@@ -49,14 +47,9 @@ class MainInterface:
         if not constant:
             sleep_time += random.randrange(self.action_delay[0], self.action_delay[1]) / 1000
 
-        test = 1
         if self.show_window or self.show_mouse or check_pixel:
             while sleep_time > 0:
                 start = time.perf_counter()
-
-                if check_pixel:
-                    print(test)
-                    test += 1
 
                 if check_pixel and not self.check_to_pull():
                     return False
@@ -129,9 +122,8 @@ class MainInterface:
         self.mouse_position()
 
         self.log_message('Fishing started')
-        self.wait_time(2, constant=True)
+        self.wait_time(2000, constant=True)
 
-        # self.player.use_buffs()
         self.player.cast_line()
 
         start = time.perf_counter()
