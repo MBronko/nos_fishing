@@ -75,8 +75,11 @@ class Player:
         res = self.interface.wait_time(random.randrange(*self.reeling_delay), constant=True, check_pixel=True)
 
         if not res:
-            self.interface.log_message('False positive detected')
-            return False
+            if self.interface.false_positive_counter <= 3:
+                self.interface.log_message('False positive detected')
+                return False
+            else:
+                self.interface.log_message('Reached limit of false positive detections')
 
         self.interface.log_message('Reeling in')
 
@@ -97,5 +100,5 @@ class Player:
         if res:
             self.use_buffs()
             self.cast_line()
-
-        return res
+            return True
+        return False

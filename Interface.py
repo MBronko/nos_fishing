@@ -33,7 +33,8 @@ class MainInterface:
 
         self.log_start = time.perf_counter()
         self.recognized_pixels = set()
-        # self.current_pixels_watched = set()
+
+        self.false_positive_counter = 0
 
     def initialize(self):
         self.window = get_nostale_window()
@@ -52,6 +53,7 @@ class MainInterface:
                 start = time.perf_counter()
 
                 if check_pixel and not self.check_to_pull():
+                    self.false_positive_counter += 1
                     return False
 
                 self.draw_window()
@@ -137,8 +139,9 @@ class MainInterface:
             if self.player.to_pull or time.perf_counter() - start > 20:
                 if time.perf_counter() - start > 20:
                     self.log_message('Waiting too long, reseting recognized pixels')
-                    self.recognized_pixels = []
+                    self.recognized_pixels = set()
 
                 if self.player.all_actions():
                     self.recognized_pixels = set()
+                    self.false_positive_counter = 0
                     start = time.perf_counter()
