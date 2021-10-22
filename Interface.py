@@ -3,7 +3,6 @@ import cv2
 
 from Config import config, parse_value
 from Objects import Player
-from WindowMgmt import get_nostale_window
 
 import time
 import math
@@ -11,9 +10,10 @@ import random
 
 
 class MainInterface:
-    def __init__(self):
+    def __init__(self, window):
         self.window = None
         self.player = Player(self)
+        self.window = window
         self.running = True
 
         self.action_delay = sorted(parse_value(config.get('delays', 'post-action'), (int, int), '-'))
@@ -36,12 +36,9 @@ class MainInterface:
 
         self.false_positive_counter = 0
 
-    def initialize(self):
-        self.window = get_nostale_window()
-
     def log_message(self, msg: str):
         timer = format(time.perf_counter() - self.log_start, '.3f')
-        print(f'{" " * (8 - len(timer))}{timer}:  {msg}')
+        print(f'{" " * (8 - len(timer))}{timer}:  {msg}    - {self.window.hwnd}')
 
     def wait_time(self, additional: int = 0, constant: bool = False, check_pixel=False):
         sleep_time = additional / 1000
@@ -138,7 +135,6 @@ class MainInterface:
 
             if self.player.to_pull or time.perf_counter() - start > 20:
                 if time.perf_counter() - start > 20:
-                    self.log_message('Waiting too long, reseting recognized pixels')
                     self.recognized_pixels = set()
 
                 if self.player.all_actions():

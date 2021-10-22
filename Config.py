@@ -29,7 +29,7 @@ default_values = {
         'activate': 'false',
     },
     'delays': {
-        'reeling': '1100-1400',
+        'reeling': '400-700',
         'post-action': '0-700',
         'post-reeling': '5000',
         'buff': '2200',
