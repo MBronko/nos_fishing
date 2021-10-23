@@ -93,13 +93,13 @@ def get_nostale_windows():
         raise NosWindowNotFound('NosTale window not found')
 
     if len(hwnds) == 1:
-        return [Window(hwnds[0])]
+        return [(Window(hwnds[0]), 1)]
 
     for idx, hwnd in enumerate(hwnds, 1):
-        win32gui.SetWindowText(hwnd, 'NosTale' + str(idx))
+        win32gui.SetWindowText(hwnd, f'NosTale {idx}')
 
     choice = input('Input NosTale id\'s (You can see them inside window titles) i.e. 1,2,3 or 1-3,5: ')
 
     choice = parse_user_choice(choice)
 
-    return [Window(hwnd) for idx, hwnd in enumerate(hwnds, 1) if idx in choice]
+    return [(Window(hwnd), idx) for idx, hwnd in enumerate(hwnds, 1) if idx in choice]

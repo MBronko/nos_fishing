@@ -10,10 +10,11 @@ import random
 
 
 class MainInterface:
-    def __init__(self, window):
+    def __init__(self, window, _id):
         self.window = None
         self.player = Player(self)
         self.window = window
+        self.id = _id
         self.running = True
 
         self.action_delay = sorted(parse_value(config.get('delays', 'post-action'), (int, int), '-'))
@@ -38,7 +39,8 @@ class MainInterface:
 
     def log_message(self, msg: str):
         timer = format(time.perf_counter() - self.log_start, '.3f')
-        print(f'{" " * (8 - len(timer))}{timer}:  {msg}    - {self.window.hwnd}')
+        hwnd_offset = 2 - len(str(self.id))
+        print(f'{" " * (9 - len(timer))}{timer}{" " * hwnd_offset}({self.id}):  {msg}')
 
     def wait_time(self, additional: int = 0, constant: bool = False, check_pixel=False):
         sleep_time = additional / 1000

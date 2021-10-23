@@ -9,11 +9,9 @@ if __name__ == '__main__':
         windows = get_nostale_windows()
     except (NosWindowNotFound, NonAdminUser) as e:
         print(e.message)
-        input('Press enter to exit.')
-        exit(0)
 
     if windows:
-        interfaces = [MainInterface(window) for window in windows]
+        interfaces = [MainInterface(window, idx) for window, idx in windows]
 
         processes = []
         for interface in interfaces:
@@ -22,3 +20,5 @@ if __name__ == '__main__':
             prc.start()
 
         processes[0].join()
+
+    input('Press enter to exit.')
