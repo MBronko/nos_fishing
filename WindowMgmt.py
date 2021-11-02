@@ -21,9 +21,11 @@ class NonAdminUser(BaseException):
 
 
 class Window:
-    def __init__(self, hwnd):
+    def __init__(self, hwnd, _id=1, show_id=False):
         self.hwnd = hwnd
         self.last_focused = 0
+        self.id = _id
+        self.show_id = show_id
 
     def get_bounds(self):
         return win32gui.GetWindowRect(self.hwnd)
@@ -93,7 +95,7 @@ def get_nostale_windows():
         raise NosWindowNotFound('NosTale window not found')
 
     if len(hwnds) == 1:
-        return [(Window(hwnds[0]), 1)]
+        return [Window(hwnds[0])]
 
     for idx, hwnd in enumerate(hwnds, 1):
         win32gui.SetWindowText(hwnd, f'NosTale {idx}')
@@ -102,4 +104,4 @@ def get_nostale_windows():
 
     choice = parse_user_choice(choice)
 
-    return [(Window(hwnd), idx) for idx, hwnd in enumerate(hwnds, 1) if idx in choice]
+    return [Window(hwnd, idx, show_id=True) for idx, hwnd in enumerate(hwnds, 1) if idx in choice]

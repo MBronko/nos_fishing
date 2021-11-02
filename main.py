@@ -11,7 +11,7 @@ if __name__ == '__main__':
         print(e.message)
 
     if windows:
-        interfaces = [MainInterface(window, idx) for window, idx in windows]
+        interfaces = [MainInterface(window) for window in windows]
 
         processes = []
         for interface in interfaces:
