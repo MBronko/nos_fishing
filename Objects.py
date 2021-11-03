@@ -62,7 +62,7 @@ class Player:
             self.last_pro_cast = time.perf_counter()
         else:
             self.interface.log_message('Casting a line')
-            self.interface.window.press(self.cast_line_key)
+        self.interface.window.press(self.cast_line_key)
 
         self.interface.wait_time(self.cast_delay, constant=True)
 
