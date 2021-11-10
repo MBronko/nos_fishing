@@ -31,10 +31,26 @@ class Window:
         return win32gui.GetWindowRect(self.hwnd)
 
     def press(self, key):
+        mod_keys = [
+            win32con.VK_LSHIFT,
+            win32con.VK_RSHIFT,
+            win32con.VK_LCONTROL,
+            win32con.VK_RCONTROL,
+            win32con.VK_LMENU,
+            win32con.VK_RMENU
+        ]
         char = ord(key[0].upper())
+
+        mod_keys = [(key, win32api.MapVirtualKey(key, 0)) for key in mod_keys if win32api.GetAsyncKeyState(key) < 0]
+
+        for key, code in mod_keys:
+            win32api.keybd_event(key, code, win32con.KEYEVENTF_KEYUP)
 
         win32api.SendMessage(self.hwnd, win32con.WM_KEYDOWN, char, 0)
         win32api.SendMessage(self.hwnd, win32con.WM_KEYUP, char, 0)
+
+        for key, code in mod_keys:
+            win32api.keybd_event(key, code, 0)
 
     def get_screenshot(self, relative_bounds):
         left, upper, right, bottom = relative_bounds
