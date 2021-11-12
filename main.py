@@ -13,12 +13,13 @@ if __name__ == '__main__':
     if windows:
         interfaces = [MainInterface(window) for window in windows]
 
-        processes = []
-        for interface in interfaces:
-            prc = Process(target=interface.run)
-            processes.append(prc)
-            prc.start()
+        procs = []
+        for interf in interfaces:
+            proc = Process(target=interf.run)
+            procs.append(proc)
+            proc.start()
 
-        processes[0].join()
+        for proc in procs:
+            proc.join()
 
     input('Press enter to exit.')

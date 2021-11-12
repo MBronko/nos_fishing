@@ -27,6 +27,9 @@ default_values = {
         'show-watched-pixel': 'true',
         'pixel-recognition-time': '3',
         'activate': 'false',
+        'stop-key': 'F8',
+        'pause-key': 'F9',
+        'start-key': 'F10',
     },
     'delays': {
         'reeling': '300-500',

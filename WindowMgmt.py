@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import time
 
 import win32api
 import win32con
@@ -30,27 +31,31 @@ class Window:
     def get_bounds(self):
         return win32gui.GetWindowRect(self.hwnd)
 
-    def press(self, key):
+    def press(self, key, urgent=False):
         mod_keys = [
             win32con.VK_LSHIFT,
             win32con.VK_RSHIFT,
             win32con.VK_LCONTROL,
             win32con.VK_RCONTROL,
             win32con.VK_LMENU,
-            win32con.VK_RMENU
+            win32con.VK_RMENU,
+            # win32con.VK_SHIFT,
+            # win32con.VK_CONTROL,
+            # win32con.VK_MENU
         ]
         char = ord(key[0].upper())
 
-        mod_keys = [(key, win32api.MapVirtualKey(key, 0)) for key in mod_keys if win32api.GetAsyncKeyState(key) < 0]
+        keys_to_escape = [(key, win32api.MapVirtualKey(key, 0)) for key in mod_keys if win32api.GetAsyncKeyState(key) < 0]
 
-        for key, code in mod_keys:
-            win32api.keybd_event(key, code, win32con.KEYEVENTF_KEYUP)
+        if not urgent and keys_to_escape:
+            while len([key for key in mod_keys if win32api.GetAsyncKeyState(key) < 0]) > 0:
+                time.sleep(0.1)
+            keys_to_escape = []
+
+        for key, code in keys_to_escape:
+            win32api.keybd_event(key, code, win32con.KEYEVENTF_EXTENDEDKEY |win32con.KEYEVENTF_KEYUP)
 
         win32api.SendMessage(self.hwnd, win32con.WM_KEYDOWN, char, 0)
-        win32api.SendMessage(self.hwnd, win32con.WM_KEYUP, char, 0)
-
-        for key, code in mod_keys:
-            win32api.keybd_event(key, code, 0)
 
     def get_screenshot(self, relative_bounds):
         left, upper, right, bottom = relative_bounds

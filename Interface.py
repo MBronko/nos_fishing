@@ -7,6 +7,7 @@ from Objects import Player
 import time
 import math
 import random
+from pynput.keyboard import Listener
 
 
 class MainInterface:
@@ -14,6 +15,8 @@ class MainInterface:
         self.player = Player(self)
         self.window = window
         self.running = True
+        self.pause = False
+        self.resumed = False
 
         self.action_delay = sorted(parse_value(config.get('delays', 'post-action'), (int, int), '-'))
         self.buff_delay = config.getint('delays', 'buff')
@@ -35,9 +38,11 @@ class MainInterface:
 
         self.false_positive_counter = 0
 
-    def log_message(self, msg: str):
+    def log_message(self, msg: str, window_id=None):
+        if window_id is None:
+            window_id = f'{" " * (2 - len(str(self.window.id)))}({self.window.id})' if self.window.show_id else ''
+
         timer = format(time.perf_counter() - self.log_start, '.3f')
-        window_id = f'{" " * (2 - len(str(self.window.id)))}({self.window.id})' if self.window.show_id else ''
         print(f'{" " * (9 - len(timer))}{timer}{window_id}:  {msg}')
 
     def wait_time(self, additional: int = 0, constant: bool = False, check_pixel=False):
@@ -116,6 +121,24 @@ class MainInterface:
             print('Uninitialized Interface')
             return
 
+        def on_press(key):
+            key = str(key).lower()
+            if key == 'key.' + config.get('general', 'start-key').lower():
+                self.log_message('Fishing unpaused', '')
+                if self.running:
+                    self.pause = False
+                    self.resumed = True
+            if key == 'key.' + config.get('general', 'stop-key').lower():
+                self.log_message('Fishing stopped', '')
+                self.running = False
+                self.pause = True
+            if key == 'key.' + config.get('general', 'pause-key').lower():
+                self.log_message('Fishing paused', '')
+                self.pause = True
+
+        listener = Listener(on_press=on_press)
+        listener.start()
+
         self.draw_window()
         self.mouse_position()
 
@@ -125,19 +148,31 @@ class MainInterface:
         self.player.cast_line()
 
         start = time.perf_counter()
-        while self.running:
-            self.draw_window()
-            self.mouse_position()
+        while True:
+            if self.pause and self.player.player_state == self.player.State.IDLE:
+                if not self.running:
+                    break
+                self.wait_time(1000)
+            elif self.resumed:
+                self.resumed = False
+                self.player.use_buffs()
+                self.player.cast_line()
+                self.recognized_pixels = set()
+                self.false_positive_counter = 0
+                start = time.perf_counter()
+            else:
+                self.draw_window()
+                self.mouse_position()
 
-            add_to_sink = time.perf_counter() - start < self.pixel_recognition_time
+                add_to_sink = time.perf_counter() - start < self.pixel_recognition_time
 
-            self.player.to_pull = self.check_to_pull(add_to_sink)
+                self.player.to_pull = self.check_to_pull(add_to_sink)
 
-            if self.player.to_pull or time.perf_counter() - start > 20:
-                if time.perf_counter() - start > 20:
-                    self.recognized_pixels = set()
+                if self.player.to_pull or time.perf_counter() - start > 20:
+                    if time.perf_counter() - start > 20:
+                        self.recognized_pixels = set()
 
-                if self.player.all_actions():
-                    self.recognized_pixels = set()
-                    self.false_positive_counter = 0
-                    start = time.perf_counter()
+                    if self.player.all_actions():
+                        self.recognized_pixels = set()
+                        self.false_positive_counter = 0
+                        start = time.perf_counter()

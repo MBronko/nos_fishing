@@ -1,4 +1,5 @@
 from Config import config, get_section, parse_name, parse_value
+from enum import Enum, auto
 
 import time
 import random
@@ -28,6 +29,8 @@ class Player:
 
         buff_data = get_section(config, 'buffs')
 
+        self.player_state = self.State.IDLE
+
         self.buffs = [Buff(self.interface, parse_name(name), *parse_value(values, (str, int))) for name, values in
                       buff_data.items()]
         self.activated = config.get('general', 'activate') == 'true'
@@ -41,9 +44,13 @@ class Player:
         self.post_reeling_delay = config.getint('delays', 'post-reeling')
         self.cast_delay = config.getint('delays', 'cast')
 
-        self.last_pro_cast = time.perf_counter()
+        self.last_pro_cast = None
 
         self.to_pull = False
+
+    class State(Enum):
+        IDLE = auto()
+        FISHING = auto()
 
     def use_buffs(self):
         if not self.activated:
@@ -56,7 +63,9 @@ class Player:
         if not self.activated:
             return
 
-        if self.use_pro and time.perf_counter() - self.last_pro_cast > self.cast_pro_cd:
+        self.player_state = self.State.FISHING
+
+        if self.use_pro and (self.last_pro_cast is None or time.perf_counter() - self.last_pro_cast > self.cast_pro_cd):
             self.interface.log_message('Casting a line (Pro)')
             self.interface.window.press(self.cast_pro_key)
             self.last_pro_cast = time.perf_counter()
@@ -82,9 +91,11 @@ class Player:
             else:
                 self.interface.log_message('Reached limit of false positive detections')
 
+        self.player_state = self.State.IDLE
+
         self.interface.log_message('Reeling in')
 
-        self.interface.window.press(self.reel_in_key)
+        self.interface.window.press(self.reel_in_key, urgent=True)
 
         self.interface.wait_time(self.post_reeling_delay)
 
@@ -99,7 +110,8 @@ class Player:
         self.to_pull = False
 
         if res:
-            self.use_buffs()
-            self.cast_line()
+            if not self.interface.pause:
+                self.use_buffs()
+                self.cast_line()
             return True
         return False
