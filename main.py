@@ -1,9 +1,10 @@
 from WindowMgmt import NosWindowNotFound, NonAdminUser, get_nostale_windows
 from Interface import MainInterface
-from multiprocessing import Process
+from multiprocessing import Process, freeze_support
 
 
 if __name__ == '__main__':
+    freeze_support()
     windows = None
     try:
         windows = get_nostale_windows()
